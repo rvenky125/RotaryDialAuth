@@ -7,10 +7,12 @@ import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Animatable
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,6 +39,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.rotarydialer.ui.theme.RotaryDialerTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.*
 
@@ -54,15 +57,19 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
+                        .fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
                         Text(
-                            text = "Provide passcode \uD83E\uDD2B",
+                            text = "ENTER\nPASSCODE \uD83E\uDD2B",
                             style = MaterialTheme.typography.h5,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 70.dp)
                         )
 
                         Passcode(
@@ -88,64 +95,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-
-@Composable
-fun Passcode(
-    passcode: String,
-    actualPasscode: String,
-    onSuccess: () -> Unit,
-    onFailure: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val fillColor = remember {
-        mutableStateOf(Color.White)
-    }
-
-    val animatedFillColor = animateColorAsState(targetValue = fillColor.value, animationSpec = spring()) {
-        if (it == Color.Green) {
-
-            onSuccess()
-        } else if (it == Color.Red) {
-            onFailure()
-        }
-    }
-
-    LaunchedEffect(key1 = actualPasscode, key2 = passcode, block = {
-        if (passcode.length < 4) {
-            if (fillColor.value != Color.White) fillColor.value = Color.White
-            return@LaunchedEffect
-        }
-
-        if (passcode == actualPasscode) {
-            fillColor.value = Color.Green
-        } else {
-            fillColor.value = Color.Red
-        }
-    })
-
-    Row(modifier = modifier.fillMaxWidth()) {
-        repeat(4) {
-            Box(
-                modifier = Modifier
-                    .padding(end = 3.dp)
-                    .size(20.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black), contentAlignment = Alignment.Center
-            ) {
-                if (passcode.length - 1 >= it) {
-                    Box(
-                        modifier = Modifier
-                            .size(15.dp)
-                            .clip(CircleShape)
-                            .background(color = animatedFillColor.value)
-                    )
-                }
-            }
-        }
-    }
-}
-
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -233,8 +182,6 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
                                 .toDegrees(digits.first().thetaRad)
                                 .toFloat() - digitButtonRadius * 0.18f
 
-                            Log.d("myTag", "lower: $lowerBound upper: $upperBound")
-
                             if (theta in lowerBound..upperBound) {
                                 digitDialDone = true
                                 val digit =
@@ -274,8 +221,6 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
             textSize = size.width / 12
             typeface = Typeface.DEFAULT_BOLD
         }
-
-        drawCircle(color = Color.Red, radius = 25f, center = Offset(160f, 160f))
 
         rotate(angle.value) {
             drawCircle(color = Color.Black, radius = size.width / 2)
@@ -333,6 +278,63 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
         drawContext.canvas.translate(-center.x, -center.y)
 
         drawCircle(color = Color.White, radius = size.width / 4.8f)
+    }
+}
+
+@Composable
+fun Passcode(
+    passcode: String,
+    actualPasscode: String,
+    onSuccess: () -> Unit,
+    onFailure: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val fillColor = remember {
+        Animatable(Color.White)
+    }
+
+    LaunchedEffect(key1 = actualPasscode, key2 = passcode, block = {
+        if (passcode.length < 4) {
+            if (fillColor.value != Color.White) fillColor.animateTo(
+                Color.White,
+                animationSpec = spring(dampingRatio = Spring.StiffnessLow)
+            )
+            return@LaunchedEffect
+        }
+
+        if (passcode == actualPasscode) {
+            fillColor.animateTo(Color.Green, animationSpec = tween(1000))
+            fillColor.snapTo(Color.White)
+            onSuccess()
+        } else {
+            fillColor.animateTo(Color.Red, spring())
+            fillColor.animateTo(Color.White, tween())
+            fillColor.animateTo(Color.Red, spring())
+            fillColor.animateTo(Color.White)
+            onFailure()
+        }
+    })
+
+    Row(modifier = modifier.fillMaxWidth()) {
+        repeat(4) {
+            Box(
+                modifier = Modifier
+                    .padding(end = 3.dp)
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                if (passcode.length - 1 >= it) {
+                    Box(
+                        modifier = Modifier
+                            .size(15.dp)
+                            .clip(CircleShape)
+                            .background(color = fillColor.value)
+                    )
+                }
+            }
+        }
     }
 }
 
