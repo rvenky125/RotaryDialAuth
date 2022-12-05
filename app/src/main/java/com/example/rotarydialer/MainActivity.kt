@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp)
+                            .padding(16.dp),
                     ) {
                         Text(
                             text = "ENTER\nPASSCODE \uD83E\uDD2B",
@@ -74,14 +74,14 @@ class MainActivity : ComponentActivity() {
 
                         Passcode(
                             passcode = passcode,
-                            actualPasscode = "1234",
+                            actualPasscode = "1357",
                             onSuccess = {
                                 passcode = ""
                             },
                             onFailure = {
                                 passcode = ""
                             },
-                            modifier = Modifier.padding(top = 20.dp)
+                            modifier = Modifier.align(Alignment.End).padding(top = 50.dp)
                         )
 
                         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -315,7 +315,7 @@ fun Passcode(
         }
     })
 
-    Row(modifier = modifier.fillMaxWidth()) {
+    Row(modifier = modifier) {
         repeat(4) {
             Box(
                 modifier = Modifier
