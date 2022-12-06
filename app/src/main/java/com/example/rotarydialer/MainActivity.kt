@@ -148,7 +148,6 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
             .onGloballyPositioned {
                 val windowBounds = it.boundsInParent()
                 canvasCenter = Offset(windowBounds.size.width / 2, windowBounds.size.height / 2)
-                Log.d("myTag", "${windowBounds.top} ${windowBounds.topLeft}")
             }
             .pointerInteropFilter { event ->
                 val theta = atan2(
@@ -174,7 +173,6 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
                             if (digitDialDone) {
                                 return@pointerInteropFilter true
                             }
-
                             val lowerBound = 360f - Math
                                 .toDegrees(digits.last().thetaRad)
                                 .toFloat() + digitButtonRadius * 0.18f
@@ -224,6 +222,8 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
 
         rotate(angle.value) {
             drawCircle(color = Color.Black, radius = size.width / 2)
+
+            //I took the values in the arc by doing things experimentally. Please let me know if there are any good ways
             drawArc(
                 color = Color.White,
                 size = Size(width = size.width * 0.70f, height = size.height * 0.70f),
@@ -235,6 +235,7 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
                 blendMode = BlendMode.Src
             )
 
+            //We simply translate to the center and draws the digits circularly from here
             drawContext.canvas.translate(center.x, center.y)
             digits.forEach { digit ->
                 val x = digitsCircleRadius * cos(digit.thetaRad)
@@ -250,6 +251,7 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
                     blendMode = BlendMode.SrcOut
                 )
             }
+            //Resetting the canvas back to it's position
             drawContext.canvas.translate(-center.x, -center.y)
         }
 
@@ -257,6 +259,7 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
         digits.forEach { digit ->
             textPaint.getTextBounds(digit.value.toString(), 0, 1, textRect)
 
+            //Point on a circle (x, y) = (r * cos(theta), r * sin(theta))
             val x = digitsCircleRadius * cos(digit.thetaRad) - textRect.width() / 2
             val y = digitsCircleRadius * sin(digit.thetaRad) + textRect.height() / 2
 
@@ -269,6 +272,7 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
                     textPaint
                 )
         }
+
         //Drawing the dot after 0
         val theta =
             ((((digits.size + 1) * angleBetweenDigits) * Math.PI / 180) - startAngleOfWholeDigits * (Math.PI / 180f)).toFloat()
@@ -276,6 +280,7 @@ fun RotaryDialer(onNewDigit: (Int) -> Unit) {
         val y = digitsCircleRadius * sin(theta) - 10f
         drawCircle(color = Color.White, radius = 25f, center = Offset(x, y))
         drawContext.canvas.translate(-center.x, -center.y)
+
 
         drawCircle(color = Color.White, radius = size.width / 4.8f)
     }
